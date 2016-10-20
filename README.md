@@ -13,6 +13,6 @@ go get github.com/Simbory/wetool
 7. 创建新的controller
    `user@local:~/gopath/src/projects/sample$ wetool ctrl news`
 8. 添加route规则：在~/gopath/src/projects/sample/controllers/init.go文件中添加路由
-**wemvc.Route("/news/<action=index>/<id=>", NewsController{})**
+**wemvc.Route("/news/&lt;action=index&gt;/&lt;id=&gt;", NewsController{})**
 9. 运行项目
    `user@local:~/gopath/src/projects/sample$ go run main.go`
