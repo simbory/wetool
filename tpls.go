@@ -21,7 +21,7 @@ import (
 
 func init() {
 	ns := wemvc.Namespace("{{.nsName}}")
-	ns.Route("/default/{{.startTag}}action={{.endTag}}", DefaultController{})
+	ns.Route("/default/{{.startTag}}action=index{{.endTag}}", DefaultController{})
 }`
 
 	tplNsCtrlFile = `package {{.pkgName}}
