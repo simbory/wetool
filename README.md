@@ -1,3 +1,4 @@
+# WEMVC开发辅助工具
 1. 获取工具
 go get github.com/Simbory/wetool
 2. 创建项目文件夹
