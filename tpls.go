@@ -13,16 +13,22 @@ func main() {
 	wemvc.Run(8080)
 }`
 
-	tplNsInit = `package {{.pkgName}}
+	tplNsInitFile = `package {{.pkgName}}
 
 import (
 	"github.com/Simbory/wemvc"
+	{{.pkgName}}Ctrls "{{.nsCtrlPkg}}"
 )
 
 func init() {
 	ns := wemvc.Namespace("{{.nsName}}")
-	ns.Route("/default/{{.startTag}}action=index{{.endTag}}", DefaultController{})
+	ns.Route("/default/{{.startTag}}action=index{{.endTag}}", {{.pkgName}}Ctrls.DefaultController{})
 }`
+
+	tplNsSettingFile = `<?xml version="1.0" encoding="utf-8"?>
+<settings>
+	<add key="Namespace.Name" value="{{.nsName}}" />
+</settings>`
 
 	tplNsCtrlFile = `package {{.pkgName}}
 
@@ -105,6 +111,8 @@ func (home HomeController) GetContact() interface{} {
 	home.ViewData["Message"] = "Contact us"
 	return home.View()
 }`,
+		"/models/models.go": `package models
+`,
 		"/controllers/init.go": `package controllers
 
 import "github.com/Simbory/wemvc"

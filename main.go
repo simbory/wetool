@@ -8,8 +8,6 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
-
-	"github.com/Simbory/wemvc"
 )
 
 type cmdType uint8
@@ -93,6 +91,7 @@ func initProject() {
 	os.MkdirAll(dir+"/content/img", 0777)
 	os.MkdirAll(dir+"/content/js", 0777)
 	os.MkdirAll(dir+"/controllers", 0777)
+	os.MkdirAll(dir+"/models", 0777)
 	os.MkdirAll(dir+"/views/home", 0777)
 	os.MkdirAll(dir+"/views/shared", 0777)
 	for fileName, content := range staticFiles {
@@ -107,42 +106,62 @@ func newNs(name string) {
 		return
 	}
 	nsDir := dir + "/" + name
-	if wemvc.IsDir(nsDir) {
+	if IsDir(nsDir) {
 		println("The namespace \"" + name + "\" is already exist.")
 		return
 	}
 	os.MkdirAll(nsDir, 0777)
+	os.MkdirAll(nsDir+"/controllers", 0777)
 	os.MkdirAll(nsDir+"/views/default", 0777)
 	pkgName := strings.Replace(name, "-", "", -1)
 	data := map[string]interface{}{
 		"pkgName":  pkgName,
+		"nsCtrlPkg": pkgPath + "/" + name + "/controllers",
 		"nsName":   name,
 		"startTag": template.HTML("<"),
 		"endTag":   template.HTML(">"),
 	}
 	// write init.go file
-	nsInitTpl, _ := template.New("NsInit").Parse(tplNsInit)
-	buf1 := &bytes.Buffer{}
-	err := nsInitTpl.Execute(buf1, data)
+	nsInitTpl, _ := template.New("NsInit").Parse(tplNsInitFile)
+	bufInit := &bytes.Buffer{}
+	err := nsInitTpl.Execute(bufInit, data)
 	if err != nil {
 		println(err.Error())
 		return
 	}
-	ioutil.WriteFile(nsDir+"/init.go", buf1.Bytes(), 0777)
+	ioutil.WriteFile(nsDir+"/init.go", bufInit.Bytes(), 0777)
+
+	// write settings.xml file
+	nsSettingTpl, _ := template.New("NsSetting").Parse(tplNsSettingFile)
+	bufSetting := &bytes.Buffer{}
+	err = nsSettingTpl.Execute(bufSetting, data)
+	if err != nil {
+		println(err.Error())
+		return
+	}
+	ioutil.WriteFile(nsDir+"/settings.xml", bufSetting.Bytes(), 0777)
 
 	// write controller file
 	nsCtrlTpl, _ := template.New("NsCtrl").Parse(tplNsCtrlFile)
-	buf2 := &bytes.Buffer{}
-	nsCtrlTpl.Execute(buf2, data)
-	ioutil.WriteFile(nsDir+"/defaultController.go", buf2.Bytes(), 0777)
+	bufCtrl := &bytes.Buffer{}
+	err = nsCtrlTpl.Execute(bufCtrl, data)
+	if err != nil {
+		println(err.Error())
+		return
+	}
+	ioutil.WriteFile(nsDir+"/controllers/defaultController.go", bufCtrl.Bytes(), 0777)
 
 	// write view file
 
 	// write controller file
 	nsViewTpl, _ := template.New("NsView").Parse(tplNsViewFile)
-	buf3 := &bytes.Buffer{}
-	nsViewTpl.Execute(buf3, data)
-	ioutil.WriteFile(nsDir+"/views/default/index.html", buf3.Bytes(), 0777)
+	bufView := &bytes.Buffer{}
+	err = nsViewTpl.Execute(bufView, data)
+	if err != nil {
+		println(err.Error())
+		return
+	}
+	ioutil.WriteFile(nsDir+"/views/default/index.html", bufView.Bytes(), 0777)
 }
 
 func newCtrl(ctrlName string) {
@@ -161,7 +180,7 @@ func newCtrl(ctrlName string) {
 	structName = structName + "Controller"
 	data["structName"] = structName
 	var ctrlDir = dir + "/controllers/"
-	if wemvc.IsFile(ctrlDir + fileName) {
+	if IsFile(ctrlDir + fileName) {
 		println("wetool: controller file is already exist: " + fileName)
 		return
 	}
@@ -183,14 +202,14 @@ func newCtrl(ctrlName string) {
 }
 
 var (
-	dir       = wemvc.WorkingDir()
+	dir       = WorkingDir()
 	goPathSrc string
 	pkgPath   string
 )
 
 func main() {
 	goPath := os.Getenv("GOPATH")
-	if len(goPath) == 0 || !wemvc.IsDir(goPath) {
+	if len(goPath) == 0 || !IsDir(goPath) {
 		println("Could not find the GOPATH environment variable.")
 		return
 	}
@@ -200,7 +219,7 @@ func main() {
 		goPathSrc = goPath + "/src"
 	}
 	if !strings.HasPrefix(dir, goPathSrc) {
-		println("Error: It seems that this is not a GO package folder. This command only can be executed under an empty GO pachage folder.\r\n")
+		println("Error: It seems that this is not a GO package folder. This command only can be executed under an empty GO pachage folder.")
 		return
 	}
 	pkgPath = dir[len(goPathSrc)+1:]
