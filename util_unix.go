@@ -10,7 +10,7 @@ func getWorkDirName() string {
 }
 
 func getOutputName() string{
-	return getWorkDirName() + ".debug.out"
+	return getWorkDirName() + ".dev.out"
 }
 
 func getGoPathSrc() string {

@@ -11,7 +11,7 @@ func getWorkDirName() string {
 }
 
 func getOutputName() string{
-	return getWorkDirName() + ".debug.exe"
+	return getWorkDirName() + ".dev.exe"
 }
 
 func getGoPathSrc() string {
