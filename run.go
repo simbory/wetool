@@ -3,7 +3,6 @@ package main
 import (
 	"os/exec"
 	"os"
-	"fmt"
 	"path/filepath"
 	"github.com/howeyc/fsnotify"
 	"path"
@@ -15,11 +14,11 @@ import (
 func killProcess(name string) error {
 	defer func() {
 		if e := recover(); e != nil {
-			fmt.Println("kill process recover:", e)
+			timePrintln("kill process recover:", e)
 		}
 	}()
 	if currentRunning != nil && currentRunning.Process != nil {
-		fmt.Println("try to kill process:", name)
+		timePrintln("try to kill process:", name)
 		return currentRunning.Process.Kill()
 	}
 	return nil
@@ -31,7 +30,8 @@ var lock = &sync.RWMutex{}
 func runProcess(name string) (*exec.Cmd, error) {
 	cmd := exec.Command("./" + name)
 	cmd.Stdout = os.Stdout
-	fmt.Println("try to run project:", name)
+	cmd.Stderr = os.Stderr
+	timePrintln("trying to run project:", name)
 	go cmd.Run()
 	return cmd, nil
 }
@@ -42,23 +42,25 @@ func buildProject() {
 	if IsFile(execName) {
 		err := killProcess(execName)
 		if err != nil {
-			println("Error:", err.Error())
+			timePrintln("Error:", err.Error())
 		}
+		timePrintln("trying to remove the old executable file:", execName)
 		err = os.Remove(execName)
 		if err != nil {
-			println("Error:", err.Error())
+			timePrintln("Error:", err.Error())
 		}
 	}
 	c := exec.Command("go", "build", "-o", getOutputName())
 	c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
 	err := c.Run()
 	if err != nil {
-		println("Errors occurred while building current project.")
+		timePrintln("Errors occurred while building current project.")
 	}
     cmd,err := runProcess(execName)
 	currentRunning = cmd
 	if err != nil {
-		println("Error:", err.Error())
+		timePrintln("Error:", err.Error())
 	}
 	lock.Unlock()
 }

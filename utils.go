@@ -1,6 +1,10 @@
 package main
 
-import "os"
+import (
+	"os"
+	"time"
+	"fmt"
+)
 
 // IsDir check if the path is directory
 func IsDir(path string) bool {
@@ -27,4 +31,10 @@ func WorkingDir() string {
 		panic(err)
 	}
 	return p
+}
+
+func timePrintln(args ...interface{}) {
+	var t = time.Now()
+	args = append([]interface{}{t.Format(time.RFC850), ":"}, args...)
+	fmt.Println(args...)
 }
