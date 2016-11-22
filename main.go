@@ -1,13 +1,8 @@
 package main
 
 import (
-	"bytes"
-	"html/template"
-	"io/ioutil"
-	"os"
-	"regexp"
-	"runtime"
 	"strings"
+	"os"
 )
 
 type cmdType uint8
@@ -55,169 +50,13 @@ func showHelp() {
 	return
 }
 
-func initProject() {
-	files, err := ioutil.ReadDir(dir)
-	if err != nil {
-		println(err.Error())
-	}
-	for _, f := range files {
-		if f.IsDir() {
-			if strings.ToLower(f.Name()) == "controllers" {
-				println("wetool: It seems that this project has been initialized. The folder \"controllers\" is already exist.")
-				return
-			}
-			if strings.ToLower(f.Name()) == "content" {
-				println("wetool: It seems that this project has been initialized. The folder \"content\" is already exist.")
-				return
-			}
-			if strings.ToLower(f.Name()) == "views" {
-				println("wetool: It seems that this project has been initialized. The folder \"views\" is already exist.")
-				return
-			}
-		} else if strings.HasSuffix(strings.ToLower(f.Name()), ".go") {
-			println("wetool: You should run this command in an empty folder which is under GOPATH src directory.")
-			return
-		} else if strings.ToLower(f.Name()) == "config.xml" {
-			println("wetool: It seems that this project has been initialize. The file \"config.xml\" is already exist.")
-			return
-		}
-	}
-	mainTpl, _ := template.New("main").Parse(tplMain)
-	data := map[string]string{"pkgPath": pkgPath}
-	var buf = &bytes.Buffer{}
-	mainTpl.Execute(buf, data)
-	ioutil.WriteFile(dir+"/main.go", buf.Bytes(), 0777)
-	os.MkdirAll(dir+"/content/css", 0777)
-	os.MkdirAll(dir+"/content/img", 0777)
-	os.MkdirAll(dir+"/content/js", 0777)
-	os.MkdirAll(dir+"/controllers", 0777)
-	os.MkdirAll(dir+"/models", 0777)
-	os.MkdirAll(dir+"/views/home", 0777)
-	os.MkdirAll(dir+"/views/shared", 0777)
-	for fileName, content := range staticFiles {
-		ioutil.WriteFile(dir+fileName, []byte(content), 0777)
-	}
-}
-
-func newNs(name string) {
-	dirRegValidate, _ := regexp.Compile("^[a-zA-Z0-9_]+[a-zA-Z0-9_-]*$")
-	if !dirRegValidate.Match([]byte(name)) {
-		println("wetool: invalid namespace name: " + name)
-		return
-	}
-	nsDir := dir + "/" + name
-	if IsDir(nsDir) {
-		println("The namespace \"" + name + "\" is already exist.")
-		return
-	}
-	os.MkdirAll(nsDir, 0777)
-	os.MkdirAll(nsDir+"/controllers", 0777)
-	os.MkdirAll(nsDir+"/views/default", 0777)
-	pkgName := strings.Replace(name, "-", "", -1)
-	data := map[string]interface{}{
-		"pkgName":  pkgName,
-		"nsCtrlPkg": pkgPath + "/" + name + "/controllers",
-		"nsName":   name,
-		"startTag": template.HTML("<"),
-		"endTag":   template.HTML(">"),
-	}
-	// write init.go file
-	nsInitTpl, _ := template.New("NsInit").Parse(tplNsInitFile)
-	bufInit := &bytes.Buffer{}
-	err := nsInitTpl.Execute(bufInit, data)
-	if err != nil {
-		println(err.Error())
-		return
-	}
-	ioutil.WriteFile(nsDir+"/init.go", bufInit.Bytes(), 0777)
-
-	// write settings.xml file
-	nsSettingTpl, _ := template.New("NsSetting").Parse(tplNsSettingFile)
-	bufSetting := &bytes.Buffer{}
-	err = nsSettingTpl.Execute(bufSetting, data)
-	if err != nil {
-		println(err.Error())
-		return
-	}
-	ioutil.WriteFile(nsDir+"/settings.xml", bufSetting.Bytes(), 0777)
-
-	// write controller file
-	nsCtrlTpl, _ := template.New("NsCtrl").Parse(tplNsCtrlFile)
-	bufCtrl := &bytes.Buffer{}
-	err = nsCtrlTpl.Execute(bufCtrl, data)
-	if err != nil {
-		println(err.Error())
-		return
-	}
-	ioutil.WriteFile(nsDir+"/controllers/defaultController.go", bufCtrl.Bytes(), 0777)
-
-	// write view file
-
-	// write controller file
-	nsViewTpl, _ := template.New("NsView").Parse(tplNsViewFile)
-	bufView := &bytes.Buffer{}
-	err = nsViewTpl.Execute(bufView, data)
-	if err != nil {
-		println(err.Error())
-		return
-	}
-	ioutil.WriteFile(nsDir+"/views/default/index.html", bufView.Bytes(), 0777)
-}
-
-func newCtrl(ctrlName string) {
-	ctrlValidation, _ := regexp.Compile("^[a-zA-Z]+[a-zA-Z0-9_]*$")
-	if !ctrlValidation.Match([]byte(ctrlName)) || strings.ToLower(ctrlName) == "controller" {
-		println("wetool: invalid ctroller name: " + ctrlName)
-		return
-	}
-	var fileName string
-	var data = make(map[string]string)
-	ctrlReplaceReg, _ := regexp.Compile("[Cc][Oo][Nn][Tt][Rr][Oo][Ll][Ll][Ee][Rr]$")
-	ctrlNameFix := string(ctrlReplaceReg.ReplaceAll([]byte(ctrlName), nil))
-	fileName = ctrlNameFix + "Controller.go"
-	structName := strings.ToUpper(ctrlNameFix[0:1]) + ctrlNameFix[1:]
-	data["structParam"] = strings.ToLower(ctrlNameFix[0:1]) + ctrlNameFix[1:]
-	structName = structName + "Controller"
-	data["structName"] = structName
-	var ctrlDir = dir + "/controllers/"
-	if IsFile(ctrlDir + fileName) {
-		println("wetool: controller file is already exist: " + fileName)
-		return
-	}
-	fInfo, err := os.Stat(ctrlDir)
-	if err != nil {
-		os.MkdirAll(ctrlDir, 0777)
-	} else if fInfo.IsDir() {
-		ctrlTpl, _ := template.New("Ctrl").Parse(tplCtrlFile)
-		buf := &bytes.Buffer{}
-		err = ctrlTpl.Execute(buf, data)
-		if err != nil {
-			println(err.Error())
-			return
-		} else {
-			println("wetool: create new controller \"" + ctrlNameFix + "\"")
-			ioutil.WriteFile(ctrlDir+fileName, buf.Bytes(), 0777)
-		}
-	}
-}
-
 var (
 	dir       = WorkingDir()
-	goPathSrc string
+	goPathSrc = getGoPathSrc()
 	pkgPath   string
 )
 
 func main() {
-	goPath := os.Getenv("GOPATH")
-	if len(goPath) == 0 || !IsDir(goPath) {
-		println("Could not find the GOPATH environment variable.")
-		return
-	}
-	if runtime.GOOS == "windows" {
-		goPathSrc = goPath + "\\src"
-	} else {
-		goPathSrc = goPath + "/src"
-	}
 	if !strings.HasPrefix(dir, goPathSrc) {
 		println("Error: It seems that this is not a GO package folder. This command only can be executed under an empty GO pachage folder.")
 		return
@@ -249,6 +88,11 @@ func main() {
 			return
 		}
 		newCtrl(args[0])
+		return
+	}
+
+	if cmdName == cmdRun {
+		runProject()
 		return
 	}
 }
