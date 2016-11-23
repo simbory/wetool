@@ -64,7 +64,8 @@ func newNs(name string) {
 	// write view file
 
 	// write controller file
-	nsViewTpl, _ := template.New("NsView").Parse(tplNsViewFile)
+	t := template.New("NsView")
+	nsViewTpl, _ := t.Parse(tplNsViewFile)
 	bufView := &bytes.Buffer{}
 	err = nsViewTpl.Execute(bufView, data)
 	if err != nil {

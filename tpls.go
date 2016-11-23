@@ -30,19 +30,28 @@ func init() {
 	<add key="Namespace.Name" value="{{.nsName}}" />
 </settings>`
 
-	tplNsCtrlFile = `package {{.pkgName}}
+	tplNsCtrlFile = `package controllers
 
 import (
 	"github.com/Simbory/wemvc"
 )
 
+// DefaultController the default controller for 'admin' namespace
 type DefaultController struct {
 	wemvc.Controller
 }
 
+// GetIndex the index action for http GET method
 func (def DefaultController) GetIndex() interface{} {
 	return def.View()
-}`
+}
+
+// PostIndex the index action for http POST method
+func (def DefaultController) PostIndex() interface{} {
+	def.ViewData["PostMsg"] = def.Request().Form.Get("msg")
+	return def.View()
+}
+`
 	tplCtrlFile = `package controllers
 
 import "github.com/Simbory/wemvc"
@@ -51,6 +60,7 @@ type {{.structName}} struct {
 	wemvc.Controller
 }
 
+// GetIndex the index action for http GET method
 func ({{.structParam}} {{.structName}}) GetIndex() interface{} {
 	return {{.structParam}}.View()
 }`
@@ -68,6 +78,12 @@ func ({{.structParam}} {{.structName}}) GetIndex() interface{} {
         <a href="/">Home</a> &gt; {{.nsName}} &gt; <a href="#">Default</a> &gt; Index
     </div>
     <h1>The Default page for namespace "{{.nsName}}"</h1>
+    {{"{{"}}if .PostMsg{{"}}"}}<p style="color:red;">{{"{{"}}.PostMsg{{"}}"}}</p>{{"{{"}}end{{"}}"}}
+    <form action="" method="POST">
+    	<label for="msg">Your post message:</label>
+    	<input type="text" name="msg" id="msg"/>
+    	<button type="submit">Submit</button>
+    </form>
 </body>
 </html>`
 
