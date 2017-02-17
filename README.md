@@ -7,7 +7,7 @@ go get github.com/Simbory/wetool
    `user@local:~/gopath/src/projects$ cd sample`
 4. 初始化项目
    `user@local:~/gopath/src/projects/sample$ wetool init`
-5. 创建项目新的namespace
+5. 创建项目新的Area
    `user@local:~/gopath/src/projects/sample$ wetool ns admin`
 6. 启用namespace: 在~/gopath/src/projects/sample/main.go文件中引入
 **import _ "projects/sample/admin"**
