@@ -3,12 +3,12 @@ package main
 import (
 	"errors"
 	"path"
-	"github.com/howeyc/fsnotify"
+	"github.com/fsnotify/fsnotify"
 )
 
 type WatcherHandler interface {
 	CanHandle(path string) bool
-	Handle(ev *fsnotify.FileEvent)
+	Handle(ev *fsnotify.Event)
 }
 
 type FileWatcher struct {
@@ -18,11 +18,11 @@ type FileWatcher struct {
 }
 
 func (fw *FileWatcher) AddWatch(path string) error {
-	return fw.watcher.Watch(path)
+	return fw.watcher.Add(path)
 }
 
 func (fw *FileWatcher) RemoveWatch(strFile string) error {
-	return fw.watcher.RemoveWatch(strFile)
+	return fw.watcher.Remove(strFile)
 }
 
 func (fw *FileWatcher) AddHandler(detector WatcherHandler) error {
@@ -41,10 +41,10 @@ func (fw *FileWatcher) Start() {
 	go func() {
 		for {
 			select {
-			case ev := <-fw.watcher.Event:
+			case ev := <-fw.watcher.Events:
 				for _, detector := range fw.handlers {
 					if detector.CanHandle(path.Clean(ev.Name)) {
-						detector.Handle(ev)
+						detector.Handle(&ev)
 					}
 				}
 			}

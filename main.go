@@ -10,7 +10,7 @@ type cmdType uint8
 const (
 	cmdEmpty cmdType = iota
 	cmdInit
-	cmdNewNs
+	cmdNewArea
 	cmdNewCtrl
 	cmdRun
 	cmdInvalidCmd
@@ -24,8 +24,8 @@ func getCmdType() (cmdType, []string) {
 	if args[1] == "init" {
 		return cmdInit, nil
 	}
-	if args[1] == "ns" {
-		return cmdNewNs, args[2:]
+	if args[1] == "area" {
+		return cmdNewArea, args[2:]
 	}
 	if args[1] == "ctrl" {
 		return cmdNewCtrl, args[2:]
@@ -43,9 +43,9 @@ func showHelp() {
 	println("    wetool command [arguments]")
 	println("")
 	println("The commands are:")
-	println("    init:           Initialize the project in an empty GO package.")
-	println("    ns [name]:      Create a new wemvc namespace with name '[NAME]'.")
-	println("    ctrl [name]:    Create a new wemvc controller with name '[NAME]'.")
+	println("    init:           Initialize the project in an empty folder. The folder must under GOPATH/src")
+	println("    area [name]:    Create a new wemvc area and the area name is [name].")
+	println("    ctrl [name]:    Create a new wemvc controller and controller name is [name].")
 	println("    run:            Compile and run the wemvc application.")
 	return
 }
@@ -58,7 +58,7 @@ var (
 
 func main() {
 	if !strings.HasPrefix(dir, goPathSrc) {
-		println("Error: It seems that this is not a GO package folder. This command only can be executed under an empty GO pachage folder.")
+		println("Error: It seems that this is not a GO package folder. This command only can be executed under an empty GO package folder.")
 		return
 	}
 	pkgPath = dir[len(goPathSrc)+1:]
@@ -72,13 +72,13 @@ func main() {
 		initProject()
 		return
 	}
-	if cmdName == cmdNewNs {
+	if cmdName == cmdNewArea {
 		if len(args) != 1 {
-			println("wetool: Invalid name of the new namespace.")
+			println("wetool: Invalid area name")
 			showHelp()
 			return
 		}
-		newNs(args[0])
+		newArea(args[0])
 		return
 	}
 	if cmdName == cmdNewCtrl {

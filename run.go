@@ -4,11 +4,10 @@ import (
 	"os/exec"
 	"os"
 	"path/filepath"
-	"github.com/howeyc/fsnotify"
+	"github.com/fsnotify/fsnotify"
 	"path"
 	"strings"
 	"sync"
-	"time"
 )
 
 func killProcess(name string) error {
@@ -87,11 +86,11 @@ func (d *srcDetector) CanHandle(path string) bool {
 	return strings.HasSuffix(path, ".go")
 }
 
-func (d *srcDetector) Handle(ev *fsnotify.FileEvent) {
+func (d *srcDetector) Handle(ev *fsnotify.Event) {
 	strFile := path.Clean(ev.Name)
-	if ev.IsDelete() {
+	if ev.Op&fsnotify.Write == fsnotify.Remove {
 		srcWatcher.RemoveWatch(strFile)
-	} else if ev.IsCreate() {
+	} else if ev.Op&fsnotify.Create == fsnotify.Create {
 		srcWatcher.AddWatch(strFile)
 	}
 	buildProject()
@@ -100,6 +99,7 @@ func (d *srcDetector) Handle(ev *fsnotify.FileEvent) {
 var srcWatcher *FileWatcher
 
 func runProject() {
+	done := make(chan bool)
 	w,err := NewWatcher()
 	if err == nil {
 		srcWatcher = w
@@ -117,7 +117,5 @@ func runProject() {
 	srcWatcher.AddHandler(&srcDetector{})
 	srcWatcher.Start()
 	buildProject()
-	for {
-		time.Sleep(10*time.Second)
-	}
+	<-done
 }

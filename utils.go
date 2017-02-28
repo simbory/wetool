@@ -4,6 +4,7 @@ import (
 	"os"
 	"time"
 	"fmt"
+	"strings"
 )
 
 // IsDir check if the path is directory
@@ -30,7 +31,7 @@ func WorkingDir() string {
 	if err != nil {
 		panic(err)
 	}
-	return p
+	return strings.Replace(p, "\\", "/", -1)
 }
 
 func timePrintln(args ...interface{}) {

@@ -9,11 +9,11 @@ import (
 )
 
 func main() {
-	wemvc.StaticDir("/content/")
+	wemvc.ServeDir("/content/")
 	wemvc.Run(8080)
 }`
 
-	tplNsInitFile = `package {{.pkgName}}
+	tplAreaInitFile = `package {{.pkgName}}
 
 import (
 	"github.com/Simbory/wemvc"
@@ -21,22 +21,25 @@ import (
 )
 
 func init() {
-	ns := wemvc.Namespace("{{.nsName}}")
-	ns.Route("/default/{{.startTag}}action=index{{.endTag}}", {{.pkgName}}Ctrls.DefaultController{})
+	area,err := wemvc.NewArea("{{.areaName}}", "{{.areaName}}")
+	if err != nil {
+		return
+	}
+	area.Route("/default/{{.startTag}}action=index{{.endTag}}", {{.pkgName}}Ctrls.DefaultController{}, "")
 }`
 
-	tplNsSettingFile = `<?xml version="1.0" encoding="utf-8"?>
+	tplAreaSettingFile = `<?xml version="1.0" encoding="utf-8"?>
 <settings>
-	<add key="Namespace.Name" value="{{.nsName}}" />
+	<add key="Area.Name" value="{{.areaName}}" />
 </settings>`
 
-	tplNsCtrlFile = `package controllers
+	tplAreaCtrlFile = `package controllers
 
 import (
 	"github.com/Simbory/wemvc"
 )
 
-// DefaultController the default controller for 'admin' namespace
+// DefaultController the default controller for 'admin' area
 type DefaultController struct {
 	wemvc.Controller
 }
@@ -65,19 +68,19 @@ func ({{.structParam}} {{.structName}}) GetIndex() interface{} {
 	return {{.structParam}}.View()
 }`
 
-	tplNsViewFile = `<!DOCTYPE html>
+	tplAreaViewFile = `<!DOCTYPE html>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Default page for namespace {{.nsName}} - My wemvc application</title>
+    <title>Default page for area {{.areaNameName}} - My wemvc application</title>
 </head>
 <body>
     <div>
-        <a href="/">Home</a> &gt; {{.nsName}} &gt; <a href="#">Default</a> &gt; Index
+        <a href="/">Home</a> &gt; {{.areaName}} &gt; <a href="#">Default</a> &gt; Index
     </div>
-    <h1>The Default page for namespace "{{.nsName}}"</h1>
+    <h1>The Default page for area "{{.areaName}}"</h1>
     {{"{{"}}if .PostMsg{{"}}"}}<p style="color:red;">{{"{{"}}.PostMsg{{"}}"}}</p>{{"{{"}}end{{"}}"}}
     <form action="" method="POST">
     	<label for="msg">Your post message:</label>
@@ -141,7 +144,7 @@ type LoginModel struct {
 import "github.com/Simbory/wemvc"
 
 func init() {
-	wemvc.Route("/<action=index>", HomeController{})
+	wemvc.Route("/<action=index>", HomeController{}, "")
 }`,
 		"/views/shared/layout.html": `<!DOCTYPE html>
 <html>

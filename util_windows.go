@@ -7,7 +7,7 @@ import (
 
 func getWorkDirName() string {
 	var dir = WorkingDir()
-	return dir[strings.LastIndex(dir, "\\") + 1:]
+	return dir[strings.LastIndex(dir, "/") + 1:]
 }
 
 func getOutputName() string{
@@ -19,5 +19,5 @@ func getGoPathSrc() string {
 	if len(goPath) == 0 || !IsDir(goPath) {
 		panic("Could not find the GOPATH environment variable.")
 	}
-	return strings.TrimRight(goPath, "\\") + "\\src"
+	return strings.Replace(strings.TrimRight(goPath, "\\") + "\\src", "\\", "/", -1)
 }
